@@ -1,0 +1,16 @@
+<script>
+    let registration = document.getElementById("regForm");
+    
+</script>
+<form id="regForm" action="/register/{{id}}/submit-form" method="POST">
+    <br>
+    <br>
+    <label for="name">Enter the name for your tag.</label>
+    <input type="text" name="name" default="MyTag">
+    <br>
+    <label for="redirect">Enter redirection url (Where you want the tag to go)</label>
+    <input type="url" name="redirect">
+    <br>
+    <input type="submit">
+</form>
+    

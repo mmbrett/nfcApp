@@ -1,0 +1,21 @@
+<br>
+<br>
+<table>
+    <thead>
+        <tr>
+            <th>Tag Name</th>
+            <th>URL</th>
+            <th>Edit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each nfcTag}}
+        <tr>
+            <td>{{name}}</td>
+            <td>{{redir}}</td>
+            <td><a href="/edit/{{id}}">Edit</a></td>
+        </tr>
+        {{/each}}
+    </tbody>
+
+</table>
