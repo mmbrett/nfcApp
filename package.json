@@ -11,12 +11,14 @@
   "dependencies": {
     "body-parser": "^1.20.2",
     "bootstrap": "^5.3.0-alpha1",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-handlebars": "^7.0.1",
     "express-openid-connect": "^2.12.0",
     "handlebars": "^4.7.7",
     "hbs": "^4.2.0",
     "mongodb": "^5.1.0",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "process": "^0.11.10"
   }
 }

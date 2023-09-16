@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { auth, requiresAuth } = require('express-openid-connect');
 const fs = require("fs");
@@ -11,20 +12,20 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const config = {
   authRequired: false,
   auth0Logout: true,
-  baseURL: 'http://localhost:3000/',
-  clientID: 'ybNmAYLHeBIzUj2vEgiiLYYOKKkAzyef',
-  issuerBaseURL: 'https://dev-1py4vrana10f87ty.us.auth0.com/',
-  secret: '66b93abbb2dbb192c9ff02782b8dcacc6e6ad9adec366f33bc04e0a6c56a9f67'
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.CLIENT_ID,
+  issuerBaseURL: process.env.ISSUER_BASE_URL,
+  secret: process.env.SECRET
 };
 
 app.use(auth(config));
 app.use(express.static(__dirname + '/public'));
 
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'Blu3R0ck3t!',
-  database: 'nfcApp'
+  host: process.env.HOST,
+  user: process.env.SQL_USER,
+  password: process.env.SQL_PASS,
+  database: process.env.DATABASE
 });
 
 connection.connect((err) => {
@@ -68,44 +69,76 @@ app.get('/home', requiresAuth(), (req, res) => {
 });
 
 app.get("/register/:id", requiresAuth(), (req, res) => {
-  res.render("registrationForm", {layout: 'index', id: req.params.id, User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")});
+  connection.query("SELECT * FROM tags WHERE id=?", req.params.id, (error, results, fields) => {
+    let content;
+    if(results[0] === undefined || error) {
+      res.render("response", {layout: 'index', text: 'Error: Tag does not exist', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+      return;
+    } else {
+      res.render("registrationForm", {layout: 'index', id: req.params.id, User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")});
+    }
+  })
+  
 })
 
 app.get('/tag/:id', function (req, res) {
   console.log('test1');
   connection.query('SELECT redir FROM tags WHERE id=?', req.params.id, (error, results, fields) => {
-    
-    if (error) {
-      res.send("Error")
+    let content;
+    if (results[0] === undefined || error) {
+      res.render("response", {layout: 'index', text: 'Error: Tag Does Not Exist', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
       return;
+    } else {
+      content = results[0].redir;
     }
-    let content = results[0].redir;
+    console.log(content);
+    
     if (content === null) {
       res.render("tagNotReg", {layout: 'index', id: req.params.id, User: ""})
       console.log('test2');
     } else {
-      res.redirect(content);
+      if (content === '') {
+        res.redirect("https://www.google.com");
+      } else {
+        res.redirect(content);
+      }
     }  
   });
 });
 
-app.get('/edit/:id', requiresAuth(), function (req, res) {
+app.get("/sqlTest/:id", function (req, res) {
   connection.query('SELECT name, redir FROM tags WHERE id=?', req.params.id, (error, results, fields) => {
-    if (error) {
-      res.render("response", {layout: 'index', text: 'Error: Tag Does Not Exist', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
-      return;
+    let content;
+    if (results[0] === undefined) {
+      content = null;
+    } else {
+      content = results[0];
     }
-    let content = results[0];
-    if (content !== JSON.stringify(req.oidc.user.sub).replaceAll('"', '')) {
-      console.log(content.name + " " + content.redir);
-      res.render("edit", {layout: 'index', name: content.name, url: content.redir, id: req.params.id, User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
-      return;
-    }   
+    console.log(content);  
   });
 });
 
-app.get('/add', requresAuth(), function (req, res) {
-  res.render("response", {layout: 'index', text: 'Tap Tag to Phone to Add!', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+app.get('/edit/:id', requiresAuth(), function (req, res) {
+  connection.query('SELECT name, redir, owner FROM tags WHERE id=?', req.params.id, (error, results, fields) => {
+    let content;
+    if (results[0] === undefined || error) {
+      res.render("response", {layout: 'index', text: 'Error: Tag Does Not Exist', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+      return;
+    } else {
+      content = results[0];
+    }
+    if (content.owner !== JSON.stringify(req.oidc.user.sub).replaceAll('"', '')) {
+      res.render("response", {layout: 'index', text: 'Error: You Do Not Own This Tag', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+    } else {
+      console.log(content.name + " " + content.redir);
+      res.render("edit", {layout: 'index', name: content.name, url: content.redir, id: req.params.id, User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+      return;
+    }
+  });
+});
+
+app.get('/add', requiresAuth(), function (req, res) {
+  res.render("standard", {layout: 'index', text: 'Tap Tag to Phone to Add!', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
 });
 
 app.post('/edit/:id/submit-form', requiresAuth(), function(req, res) {
@@ -125,6 +158,7 @@ app.post('/edit/:id/submit-form', requiresAuth(), function(req, res) {
       return;
     }   
   });
+  
   connection.query(`UPDATE tags SET redir='${tagRedir}', name='${tagName}', last_modified=CURRENT_TIMESTAMP WHERE id='${tagId}'`, (error, results, fields) => {
     if (error) {
       res.render("response", {layout: 'index', text: 'Error: Process Failed', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
@@ -165,6 +199,11 @@ app.post('/register/:id/submit-form', requiresAuth(), function(req, res) {
   });
   
 });
+
+
+app.use((req, res, next) => {
+  res.status(404).render('error', {layout: 'index', text: '404: Page not found', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+})
 
 app.listen(3000, () => {
   console.log('Example app listening on port 3000!');

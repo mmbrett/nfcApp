@@ -1,0 +1,38 @@
+<br>
+<br>
+<h1 style='font-family:Helvetica'>{{text}}</h1>
+
+<br>
+<h2 style='font-family:Helvetica'>Or Input Id Below</h2>
+<br>
+<input type="text" id="input">
+
+<script>
+    function redir() {
+        let input = document.getElementById('input').value;
+        window.location.href = '/register/' + input;
+    }
+</script>
+
+<button onclick="redir()" style="
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 20px 30px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 10px;
+">Add Tag</button>
+<br>
+<br>
+<button onclick="location.href='/home'" style="
+  background-color: royalblue;
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 10px;
+">Go Home</button>
