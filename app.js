@@ -104,6 +104,10 @@ app.get('/edit/:id', requiresAuth(), function (req, res) {
   });
 });
 
+app.get('/add', requresAuth(), function (req, res) {
+  res.render("response", {layout: 'index', text: 'Tap Tag to Phone to Add!', User: JSON.stringify(req.oidc.user.given_name).replaceAll('"', "")})
+});
+
 app.post('/edit/:id/submit-form', requiresAuth(), function(req, res) {
   const tagName = req.body.name;
   const tagId = req.params.id;
